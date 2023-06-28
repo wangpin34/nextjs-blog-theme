@@ -26,6 +26,7 @@ export default function Index({ posts, globalData }) {
               <Link
                 as={`/posts/${post.filePath.replace(/\.mdx?$/, '')}`}
                 href={`/posts/[slug]`}
+                passHref legacyBehavior
               >
                 <a className="py-6 lg:py-10 px-6 lg:px-16 block focus:outline-none focus:ring-4">
                   {post.data.date && (
