@@ -1,8 +1,9 @@
+import rehypePrism from '@mapbox/rehype-prism';
 import fs from 'fs';
-import path from 'path';
 import matter from 'gray-matter';
 import { serialize } from 'next-mdx-remote/serialize';
-import rehypePrism from '@mapbox/rehype-prism';
+import path from 'path';
+import imageSize from 'rehype-img-size';
 
 // POSTS_PATH is useful when you want to get the path to a specific file
 export const POSTS_PATH = path.join(process.cwd(), 'posts');
@@ -48,7 +49,7 @@ export const getPostBySlug = async (slug) => {
     // Optionally pass remark/rehype plugins
     mdxOptions: {
       remarkPlugins: [],
-      rehypePlugins: [rehypePrism],
+      rehypePlugins: [[imageSize, { dir: 'public' }], rehypePrism],
     },
     scope: data,
   });
