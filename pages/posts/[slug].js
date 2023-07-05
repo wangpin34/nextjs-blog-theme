@@ -17,12 +17,15 @@ import {
   postFilePaths,
 } from '../../utils/mdx-utils';
 
-function CustomImage(props) {
-  const imgSrc = useMemo(
-    () => require(`../../public${props.src}`),
-    [props.src]
+function CustomImage({ src, alt, ...rest }) {
+  const imgSrc = useMemo(() => require(`../../public${src}`), [src]);
+  return (
+    <Image
+      {...rest}
+      src={imgSrc}
+      alt={alt ?? src.subsring(src.lastIndexOf('/') + 1, src.lastIndexOf('.'))}
+    />
   );
-  return <Image alt={'haha'} {...props} loading="lazy" src={imgSrc} />;
 }
 
 // Custom components/renderers to pass to MDX.
