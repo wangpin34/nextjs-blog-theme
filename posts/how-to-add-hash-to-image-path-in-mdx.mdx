@@ -1,0 +1,110 @@
+---
+title: 如何为 MDX 中引用的图片生成 hash 文件名
+description: MDX 中引用的图片变动时，应该自动的更新图片路径，从而使得用户端缓存失效。如何利用 NextJS 的内置特性实现这个功能呢？
+date: July 3 2023
+---
+
+# 问题
+
+我负责的一个 NextJS 文档项目最近发现了诡异的问题：文档中引用的图片已替换成新图，但是用户浏览器始终无法看到新图。debug 一番，找到直接原因：Nginx 将图片的缓存时间设置为 1 年，对应的 HTTP 响应头为
+
+```
+Cache Control: max-age=36540000
+```
+
+所以，缓存未失效前，浏览器只从本地提取缓存，不去服务器下载新图片。所以用户只能看到老图片。解决的办法是主动的作废用户端缓存。
+
+# `content hash` 与 `invalide cache`？
+
+`content hash` 指的是对文件内容计算得到一个独一无二 `hash` 值。不同的图片自然有不同的 hash。因此，当图片的内容被修改，hash 会变化。在 webpack，rollup 等打包工具中，常利用 hash 值来组织资源文件名。比如，原图片为 `NextJS.png`，`hash` 为 `abcd`，最终文件名是 `NextJS.abcd.png`（此文件名会替换引用此图片的 js，css，以便程序正常）。
+当文件内容变更，hash 也会变化。比如 hash 为 `efgh`，那么资源文件名就从 `NextJS.abcd.png` 变化为 `NextJS.efgh.png` 。
+
+`content hash` 能够保证新图片得到一个新名字，`html` 引用新图片，用户看到新图片，相当于作废（invalidate）老图片。
+
+所以我们接下来会引入 `content hash` 来完善 `cache` 策略。
+
+# static import image
+
+我搜索了官方文档，只在 [image minimumcachettl](https://NextJS.org/docs/pages/api-reference/components/image#minimumcachettl) 搜到与 hash 有关的线索。
+
+> You can configure the Time to Live (TTL) in seconds for cached optimized images. In many cases, it's better to use a Static Image Import which will automatically hash the file contents and cache the image forever with a Cache-Control header of immutable.
+> 所谓 static import image，即：
+
+```javascript
+import ImageSrc from './NextJS.png';
+```
+
+MDX 中的确可以这么做：
+
+```markdown
+import imageSrc from './NextJS.png';
+
+# Any title
+
+<ImageSrc src={imageSrc} />
+```
+
+但我更喜欢的方式是 markdown image 的写法：
+
+```markdown
+# Any title
+
+![alt](/NextJS.png)
+```
+
+# CustomComponent，限制，规则，以及疑问
+
+> 坦白来说，当 `NextJS` 的表述是 `static import image` 才可能有 `content hash`，我就应该放弃了。因为无论如何，我也无法将 `markdown image` 写法转化为 `static import`（正则匹配，自动生成 `import` 代码，然后再用 `NextJS` 处理，应该能成，但不是我喜欢的方式）。
+
+我尝试了下面这个办法，然后“居然”成功了。思路是，用 `require` 或者 `dynamic import` 来获得 `imgsrc`，然后用 `next/image` 渲染 image。
+
+具体做法：
+
+pages/posts/[slug].js
+
+```javascript
+function CustomImage({ src, alt, ...rest }) {
+  const imgSrc = useMemo(() => require(`../../public${src}`), [src]);
+  return (
+    <Image
+      {...rest}
+      src={imgSrc}
+      alt={alt ?? src.subsring(src.lastIndexOf('/') + 1, src.lastIndexOf('.'))}
+    />
+  );
+}
+```
+
+posts/test-post.MDX
+
+```markdown
+---
+title: test post
+description: show image that will be rendered with content hash in path
+date: Jan 2 2021
+---
+
+This is an example post.
+
+![ladybug](/pexels-pixabay-36485.jpg)
+```
+
+图片存放在 `public/pexels-pixabay-36485.jpg`。（尝试过存放在 posts 目录，但是 build 失败，也许我该提个 issue 问问 NextJS team？）
+
+请打开浏览器调试工具查看下面图片的路径，图片原名 `pexels-pixabay-36485.jpg` 。
+![ladybug](/pexels-pixabay-36485.jpg)
+
+# Conclusion
+
+为 MDX 或者 markdown 中的图片生成 hash 文件名需要具备的条件：
+
+1. 自定义 MDX 的 image component，使用 require image 并且用 next/image 渲染图片。
+2. 图片存放在 public 目录，MDX 中使用绝对路径（相对于 public 目录）引用图片。（我也许会花点时间搞清楚这个限制的根本原因，更理想的存放 image 的地方绝对不是 public）
+
+其他限制：
+
+1. next-remote-watch 启动项目，会报 `Unhandled Runtime Error
+TypeError: _jsx is not a function` 错误。
+2. 目前只在 next-mdx-remote 方案中验证成功。已知无法在成功的有 remark processor。
+
+ps: NextJS 根据资源的引用方式配置不同的 Cache 策略，1 年，或者 no cache，所以，我暂时移除 Nginx 中配置的 Cache 规则，避免无谓的覆盖。
