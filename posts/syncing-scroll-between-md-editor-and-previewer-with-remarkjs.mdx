@@ -1,0 +1,301 @@
+---
+title: 如何为基于 remarkjs 的 markdown 编辑器添加同步滚动
+description: 没有双屏同步滚动的 markdown 编辑器是没有灵魂的。
+date: Aug 5 2023
+---
+
+# TL;DR
+
+- mdast（markdown 语法树） 中保存了 markdown node position（位置信息），起始行，结束行。
+- remark-rehype 在将 mdast 转化为 hast（html 语法树）的过程中丢失了 position。
+- 自定义 handler 配置给 remark-rehype，寻回 position。
+- 枯燥的同步 scroll 逻辑。
+
+# 引子
+
+前阵时间在 junjin 看了篇文章 [markdown 编辑器实现双屏同步滚动](https://juejin.cn/post/7129743753023062052), 意识到自己造的很多轮子，都缺少这个关键的体验。非常惭愧，于是计划赶紧加上。但是研究了文章作者的代码，发现并不容易。当然，不容易的部分并不在于滚动本身，而在于滚动之前`确定关联关系` - 即确定 markdown 和 html 之间的对应关系。严格来说，就是哪一行 markdown 对应哪一行 html。
+
+本文重点记录“确定关联关系”的探索过程。
+
+我使用的技术栈是 remark + react，关键的 npm package：
+
+- remark-parse: markdown 转 mdast，mdast 是 markdown 语法树
+- remark-rehype： mdast 转 hast，hast 是 html 语法树
+- rehype-react： hast 转 react
+
+# mdast 的 position 信息
+
+刚开始，我写了个小脚本，将一段 markdown 转化为 mdast，分析了它的结构，意外的发现 mdast 里保存了 position 信息。
+
+test.ts
+
+```javascript
+import { unified } from 'unified';
+import remarkParse from 'remark-parse';
+
+const processor = unified().use(remarkParse);
+
+const markdown = `
+![calm](https://images.unsplash.com/photo-1691264122434-3b5a1dac81d5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1856&q=80)
+`;
+
+console.log(processor.parse(markdown));
+```
+
+```bash
+$ npx ts-node --esm test.ts
+{
+  type: 'root',
+  children: [ { type: 'paragraph', children: [Array], position: [Object] } ],
+  position: {
+    start: { line: 1, column: 1, offset: 0 },
+    end: { line: 3, column: 1, offset: 177 }
+  }
+}
+```
+
+如上，position 里保存了每个 mdast 原始的行（开始，结束）。如果这个信息能够 expose 到 react 组件，我们的问题不就解决一大半了吗？
+
+那么，问题来了，到底是哪一步丢掉了 position 信息呢？
+我们上面列举了关键的三个 package，remarkjs 这里，生成 position。那么，问题在下游的两个 package 喽。
+
+按顺序先读 remark-rehype 的源码。remark-rehype 几乎是个空壳子，逻辑都在 mdast-util-to-hast，它的主要任务就是根据 mdast 的类型，用不同的 handler，将 mdast node 转化为 hast。这是 image handler 的代码：
+
+```javascript
+export function image(state, node) {
+  /** @type {Properties} */
+  const properties = { src: normalizeUri(node.url) };
+
+  if (node.alt !== null && node.alt !== undefined) {
+    properties.alt = node.alt;
+  }
+
+  if (node.title !== null && node.title !== undefined) {
+    properties.title = node.title;
+  }
+
+  /** @type {Element} */
+  const result = { type: 'element', tagName: 'img', properties, children: [] };
+  state.patch(node, result);
+  return state.applyData(node, result);
+}
+```
+
+如上，它采集了 title，alt，src 等属性，然后组装 hast。的确没有收集 position。
+如果加上 position 呢？remark-rehype 支持自定义 handler，我们改一下 image handler 试试：
+
+```javascript
+function gatherPosition(node) {
+  return {
+    [`data-startline`]: node.position.start.line,
+    [`data-startcolumn`]: node.position.start.column,
+    [`data-startoffset`]: node.position.start.offset,
+    [`data-endline`]: node.position.end.line,
+    [`data-endcolumn`]: node.position.end.column,
+    [`data-endoffset`]: node.position.end.offset,
+  };
+}
+export function image(state, node) {
+  /** @type {Properties} */
+  const properties = { src: normalizeUri(node.url) };
+
+  if (node.alt !== null && node.alt !== undefined) {
+    properties.alt = node.alt;
+  }
+
+  if (node.title !== null && node.title !== undefined) {
+    properties.title = node.title;
+  }
+
+  /** @type {Element} */
+  const result = {
+    type: 'element',
+    tagName: 'img',
+    properties: { ...gatherPosition(node), ...properties },
+    children: [],
+  };
+  state.patch(node, result);
+  return state.applyData(node, result);
+}
+```
+
+rehype-react 这里也要改一下对应的 image 组件，把 position 放在 html prop 里（直接 rest 了，哈哈）：
+
+```javascript
+function Img({ src, alt, ...rest }: { src: string, alt: string }) {
+  return <img src={src} alt={alt} {...rest} />;
+}
+```
+
+成功了，image html 里完美的保留了 position 信息：
+![position properties of markdown image](/markdown-editor-scroll-image-position-value.png)
+
+图片不够清楚的话：
+
+```html
+<img
+  src="https://images.unsplash.com/photo-1691264122434-3b5a1dac81d5?ixlib=rb-4.0.3&amp;ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&amp;auto=format&amp;fit=crop&amp;w=1856&amp;q=80"
+  alt="calm"
+  data-startline="55"
+  data-startcolumn="1"
+  data-startoffset="2668"
+  data-endline="55"
+  data-endcolumn="176"
+  data-endoffset="2843"
+/>
+```
+
+实验成功，接下来就是简单的体力活
+
+1. 自定义所有的 handler，保留 position，然后配置给 remark-rehype。我的办法是直接复制了 mdast-util-to-hash 的 handlers，放在自己代码库下。
+2. 自定义 rehype-react 所有 tag 对应的组件，将 position 存放在 html 属性上。
+
+# 滚动部分的逻辑
+
+解决了 position 的保存问题，剩下来的就是如何监测 A 滚动，同步滚动 B。分为两部分：
+
+1. 编辑器滚动时，同步滚动预览；
+2. 预览滚动时，同步滚动编辑器。
+
+为了保证滚动的即时性，也为了避免使用 state 保存状态引起的回环依赖（滚动编辑器 to 滚动预览界面），滚动逻辑统统做到一个 effect 里。 逻辑比较直观，所以直接上代码：
+
+注：编辑器底层用了 [codemirror](https://codemirror.net)。部分代码和 html 层级有关系，最好参考完整代码和实际渲染结果阅读，详见 [wxformat](https://github.com/wangpin34/wxformat/blob/main/src/App.tsx)，部署在 [https://wangpin34.github.io/wxformat/](https://wangpin34.github.io/wxformat/)
+
+```javascript
+ useEffect(() => {
+    let isScrollEditorScrolling = false
+    let isScrollPreviewerScrolling = false
+
+    const editorContainer = document.querySelector('#editor-container')
+    const previewContainer = document.querySelector('#preview-container')
+
+    const scrollPreviewerByLine = (lineNumber: number, totalLines: number) => {
+      console.debug(`scroll preview to line[${lineNumber}], totalLines: ${totalLines}`)
+      if (previewContainer) {
+        if (lineNumber === 1) {
+          previewContainer.scrollTop = 0
+          return
+        }
+        if (lineNumber >= totalLines) {
+          previewContainer.scrollTop = previewContainer.scrollHeight
+          return
+        }
+
+        let desiredScrollTop = -1
+        const children = previewContainer.querySelectorAll('.preview > [data-startline]')
+        for (const child of children) {
+          const start = child.getAttribute('data-startline')
+          const end = child.getAttribute('data-endline')
+
+          if (start && end) {
+            const startNum = parseInt(start)
+            const endNum = parseInt(end)
+
+            if (startNum <= lineNumber && endNum >= lineNumber) {
+              let percent = 0
+              if (startNum !== endNum) {
+                percent = (lineNumber - startNum) / (endNum - startNum)
+              }
+              const styles = getComputedStyle(child)
+              const height = parseFloat(styles.height)
+              //@ts-ignore
+              desiredScrollTop = child.offsetTop + percent * height
+              break
+            }
+          }
+        }
+        if (desiredScrollTop < 0) {
+          return
+        }
+        previewContainer.scrollTop = desiredScrollTop
+      }
+    }
+
+    const editorScrollListener = (e: Event) => {
+      if (isScrollPreviewerScrolling) {
+        isScrollPreviewerScrolling = false
+        return
+      }
+      isScrollEditorScrolling = true
+      const node = e.target as HTMLDivElement
+      const { top: pTop, bottom: pBottom } = node.getBoundingClientRect()
+      const lines = node.querySelectorAll('.cm-line')
+      const last = lines[lines.length - 1]
+      const { top, bottom } = last.getBoundingClientRect()
+      if (top >= pTop && bottom <= pBottom) {
+        scrollPreviewerByLine(lines.length, lines.length)
+        return
+      }
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i]
+        const { top, bottom } = line.getBoundingClientRect()
+
+        if (top >= pTop && bottom <= pBottom) {
+          scrollPreviewerByLine(i + 1, lines.length)
+          break
+        }
+      }
+    }
+
+    const previewScrollListener = (e: Event) => {
+      if (isScrollEditorScrolling) {
+        isScrollEditorScrolling = false
+        return
+      }
+      isScrollPreviewerScrolling = true
+
+      const node = e.target as HTMLDivElement
+      const scrollTop = node.scrollTop
+      if (scrollTop === 0) {
+        return
+      }
+      if (scrollTop + node.clientHeight >= node.scrollHeight) {
+        return
+      }
+      const children = node.querySelectorAll('.preview > [data-startline]')
+      for (const child of children) {
+        //@ts-ignore
+        if (scrollTop >= child.offsetTop && scrollTop <= child.offsetTop + child.clientHeight) {
+          //@ts-ignore
+          const percent = (scrollTop - child.offsetTop) / child.clientHeight
+          const startLine = parseInt(child.getAttribute('data-startline') as string)
+          const endLine = parseInt(child.getAttribute('data-endline') as string)
+          let targetLine = startLine
+          if (startLine !== endLine) {
+            targetLine = startLine + Math.ceil((endLine - startLine) * percent)
+          }
+
+          if (editorContainer && targetLine > 0) {
+            const lines = Array.from(editorContainer.querySelectorAll('.cm-line'))
+            const line = lines[targetLine - 1]
+
+            //@ts-ignore
+            editorContainer.scrollTop = line.offsetTop
+          }
+
+          break
+        }
+      }
+    }
+
+    if (editorContainer && previewContainer) {
+      editorContainer!.addEventListener('scroll', editorScrollListener, false)
+      previewContainer!.addEventListener('scroll', previewScrollListener, false)
+      return () => {
+        editorContainer!.removeEventListener('scroll', editorScrollListener)
+        previewContainer!.removeEventListener('scroll', previewScrollListener)
+      }
+    }
+  }, [])
+```
+
+简单概括下：
+
+1. editor 端，根据滚动行数，在预览界面遍历，找到 position 符合的 dom，scroll 到 dom 位置。
+2. 预览界面端，查找第一个在屏幕的 dom，拿到 position 里的 start line，end line，结合滚动的百分比，计算出一个合理的 line number，滚动 editor 到此行。
+
+这里的逻辑应该还有优化空间，比如对 editor 同步滚动时一行的具体百分比。有空再做哈。
+
+# 相关资料
+
+- [wxformat 代码仓库](https://github.com/wangpin34/wxformat)
