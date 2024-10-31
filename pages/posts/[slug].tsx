@@ -1,5 +1,5 @@
+import classnames from 'classnames';
 import { MDXRemote } from 'next-mdx-remote';
-import Head from 'next/head';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ComponentProps, useMemo } from 'react';
@@ -7,6 +7,7 @@ import ArrowIcon from '../../components/ArrowIcon';
 import CustomLink from '../../components/CustomLink';
 import Footer from '../../components/Footer';
 import Header from '../../components/Header';
+import { H1, H2, H3, H4, H5, H6 } from '../../components/HeadLine';
 import Layout, { GradientBackground } from '../../components/Layout';
 import SEO from '../../components/SEO';
 import { getGlobalData } from '../../utils/global-data';
@@ -16,7 +17,6 @@ import {
   getPreviousPostBySlug,
   postFilePaths,
 } from '../../utils/mdx-utils';
-
 function CustomImage({ src, alt, ...rest }) {
   const imgSrc = useMemo(() => require(`../../public${src}`), [src]);
   return (
@@ -36,11 +36,32 @@ type MDXComponents = ComponentProps<typeof MDXRemote>['components'];
 const components: MDXComponents = {
   a: CustomLink,
   img: CustomImage,
+  h1: H1,
+  h2: H2,
+  h3: H3,
+  h4: H4,
+  h5: H5,
+  h6: H6,
   // It also works with dynamically-imported components, which is especially
   // useful for conditionally loading components for certain routes.
   // See the notes in README.md for more details.
-  Head,
-  Code: ({ children, className }) => <div className="haha">{children}</div>,
+  // Head,
+  code: ({ children, className, ...rest }) =>
+    className?.startsWith('language-') ? (
+      <code className={className} {...rest}>
+        {children}
+      </code>
+    ) : (
+      <code
+        className={classnames(
+          className,
+          'px-1 mx-1 text-slate-300 bg-pink-600 rounded-sm'
+        )}
+        {...rest}
+      >
+        {children}
+      </code>
+    ),
 };
 
 export default function PostPage({
@@ -57,7 +78,7 @@ export default function PostPage({
         description={frontMatter.description}
       />
       <Header name={globalData.name} />
-      <article className="w-full max-w-full px-6 md:px-0">
+      <article className="w-full max-w-full px-6 md:px-0 selection:bg-pink-300 selection:text-slate-600">
         <header>
           <h1 className="text-3xl md:text-5xl dark:text-white text-center mb-12">
             {frontMatter.title}
