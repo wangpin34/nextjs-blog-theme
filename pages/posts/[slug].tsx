@@ -2,7 +2,7 @@ import { MDXRemote } from 'next-mdx-remote';
 import Head from 'next/head';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useMemo } from 'react';
+import { ComponentProps, useMemo } from 'react';
 import ArrowIcon from '../../components/ArrowIcon';
 import CustomLink from '../../components/CustomLink';
 import Footer from '../../components/Footer';
@@ -28,17 +28,19 @@ function CustomImage({ src, alt, ...rest }) {
   );
 }
 
+type MDXComponents = ComponentProps<typeof MDXRemote>['components'];
 // Custom components/renderers to pass to MDX.
 // Since the MDX files aren't loaded by webpack, they have no knowledge of how
 // to handle import statements. Instead, you must include components in scope
 // here.
-const components = {
+const components: MDXComponents = {
   a: CustomLink,
   img: CustomImage,
   // It also works with dynamically-imported components, which is especially
   // useful for conditionally loading components for certain routes.
   // See the notes in README.md for more details.
   Head,
+  Code: ({ children, className }) => <div className="haha">{children}</div>,
 };
 
 export default function PostPage({
@@ -55,7 +57,7 @@ export default function PostPage({
         description={frontMatter.description}
       />
       <Header name={globalData.name} />
-      <article className="px-6 md:px-0">
+      <article className="w-full max-w-full px-6 md:px-0">
         <header>
           <h1 className="text-3xl md:text-5xl dark:text-white text-center mb-12">
             {frontMatter.title}
