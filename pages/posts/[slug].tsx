@@ -55,7 +55,7 @@ const components: MDXComponents = {
       <code
         className={classnames(
           className,
-          'px-1 mx-1 text-slate-300 bg-pink-600 rounded-sm'
+          'p-1 mx-1 text-pink-600 bg-slate-100 rounded-md'
         )}
         {...rest}
       >
