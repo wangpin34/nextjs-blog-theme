@@ -1,17 +1,13 @@
 {
-  "name": "nextjs-blog-theme",
+  "name": "penn-wang-blog",
   "description": "Penn Wang's Blog",
   "author": "Penn Wang<guyusay@gmail.com>",
   "contributors": [
-    "Charlie Gerard",
-    "Prince Wilson",
-    "Tara Manicsic",
-    "Thom Krupa",
     "Penn Wang"
   ],
-  "homepage": "https://github.com/netlify-templates/nextjs-blog-theme",
+  "homepage": "https://github.com/wangpin34/nextjs-blog-theme",
   "bugs": {
-    "url": "https://github.com/netlify-templates/nextjs-blog-theme/issues"
+    "url": "https://github.com/wangpin34/nextjs-blog-theme/issues"
   },
   "scripts": {
     "dev": "next",
