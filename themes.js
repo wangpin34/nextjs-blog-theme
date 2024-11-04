@@ -1,3 +1,5 @@
+const colors = require('tailwindcss/colors');
+
 exports.COLOR_THEMES = {
   default: {
     colors: {
@@ -42,6 +44,15 @@ exports.COLOR_THEMES = {
       'gradient-2': '#00F37F',
       'gradient-3': '#00F37F',
       'gradient-4': '#FFCC81',
+    },
+  },
+  pink: {
+    colors: {
+      primary: colors.pink[600],
+      'gradient-1': '#00F0FF',
+      'gradient-2': '#00F0FF',
+      'gradient-3': '#FAFF00',
+      'gradient-4': '#00F0FF',
     },
   },
 };

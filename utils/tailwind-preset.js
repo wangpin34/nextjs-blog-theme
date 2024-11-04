@@ -49,17 +49,26 @@ module.exports = {
         primary: 'var(--font-primary)',
         secondary: 'var(--font-secondary)',
       },
-      theme: {
-        bejamas: {
-          colors: {
-            primary: '#FF8585',
-            'gradient-1': '#7d7aff',
-            'gradient-2': '#2121E2',
-            'gradient-3': '#FF76B8',
-            'gradient-4': '#001AFF',
-          },
-        },
-      },
+      // theme: {
+      //   bejamas: {
+      //     colors: {
+      //       primary: '#FF8585',
+      //       'gradient-1': '#7d7aff',
+      //       'gradient-2': '#2121E2',
+      //       'gradient-3': '#FF76B8',
+      //       'gradient-4': '#001AFF',
+      //     },
+      //   },
+      //   pink: {
+      //     colors: {
+      //       primary: 'red',
+      //       'gradient-1': '#00F0FF',
+      //       'gradient-2': '#00F0FF',
+      //       'gradient-3': '#FAFF00',
+      //       'gradient-4': '#00F0FF',
+      //     },
+      //   },
+      // },
       typography(theme) {
         return {
           dark: {
