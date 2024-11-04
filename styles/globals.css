@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 @tailwind variants;
+@import './prisma-funky-normal.css';
 
 h1,
 h2,
