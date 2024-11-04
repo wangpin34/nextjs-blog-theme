@@ -4,7 +4,7 @@ export function H1({ children }) {
       <a
         href={`#${children}`}
         id={String(children)}
-        className="text-4xl font-semibold text-pink-600 no-underline"
+        className="text-4xl font-semibold text-pink-600 no-underline dark:text-pink-600"
       >
         {children}
       </a>
@@ -18,7 +18,7 @@ export function H2({ children }) {
       <a
         href={`#${children}`}
         id={String(children)}
-        className="text-4xl font-light text-pink-600  no-underline"
+        className="text-4xl font-light text-pink-600  no-underline dark:text-pink-600"
       >
         {children}
       </a>
@@ -32,7 +32,7 @@ export function H3({ children }) {
       <a
         href={`#${children}`}
         id={String(children)}
-        className="text-3xl font-light text-pink-600  no-underline"
+        className="text-3xl font-light text-pink-600  no-underline dark:text-pink-600"
       >
         {children}
       </a>
@@ -46,7 +46,7 @@ export function H4({ children }) {
       <a
         href={`#${children}`}
         id={String(children)}
-        className="text-2xl font-light text-pink-600 no-underline"
+        className="text-2xl font-light text-pink-600 no-underline dark:text-pink-600"
       >
         {children}
       </a>
@@ -60,7 +60,7 @@ export function H5({ children }) {
       <a
         href={`#${children}`}
         id={String(children)}
-        className="text-xl font-semibold text-pink-600 no-underline"
+        className="text-xl font-semibold text-pink-600 no-underline dark:text-pink-600"
       >
         {children}
       </a>
@@ -74,7 +74,7 @@ export function H6({ children }) {
       <a
         href={`#${children}`}
         id={String(children)}
-        className="text-lg font-semibold text-pink-600 no-underline"
+        className="text-lg font-semibold text-pink-600 no-underline dark:text-pink-600"
       >
         {children}
       </a>
