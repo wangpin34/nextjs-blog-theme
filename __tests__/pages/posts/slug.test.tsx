@@ -1,0 +1,154 @@
+import { render, screen } from '@testing-library/react';
+import React from 'react';
+
+import PostPage, {
+  getStaticPaths,
+  getStaticProps,
+} from '../../../pages/posts/[slug]';
+
+jest.mock('next-mdx-remote', () => ({
+  MDXRemote: () => <div data-testid="mdx-remote" />,
+}));
+
+jest.mock('next/image', () => ({
+  __esModule: true,
+  default: (props: any) => {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img alt={props.alt} {...props} />;
+  },
+}));
+
+jest.mock('next/link', () => ({
+  __esModule: true,
+  default: ({ href, children, ...rest }: any) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
+  ),
+}));
+
+jest.mock('../../../components/Layout', () => ({
+  __esModule: true,
+  default: ({ children }: any) => <div data-testid="layout">{children}</div>,
+  GradientBackground: () => null,
+}));
+
+jest.mock('../../../components/SEO', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+
+jest.mock('../../../components/Header', () => ({
+  __esModule: true,
+  default: ({ name }: any) => <div data-testid="header">{name}</div>,
+}));
+
+jest.mock('../../../components/Footer', () => ({
+  __esModule: true,
+  default: ({ copyrightText }: any) => (
+    <div data-testid="footer">{copyrightText}</div>
+  ),
+}));
+
+jest.mock('../../../components/ArrowIcon', () => ({
+  __esModule: true,
+  default: () => <span aria-hidden="true" />,
+}));
+
+jest.mock('../../../components/CustomLink', () => ({
+  __esModule: true,
+  default: ({ href, children, ...rest }: any) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
+  ),
+}));
+
+jest.mock('../../../components/HeadLine', () => ({
+  __esModule: true,
+  H1: ({ children }: any) => <h1>{children}</h1>,
+  H2: ({ children }: any) => <h2>{children}</h2>,
+  H3: ({ children }: any) => <h3>{children}</h3>,
+  H4: ({ children }: any) => <h4>{children}</h4>,
+  H5: ({ children }: any) => <h5>{children}</h5>,
+  H6: ({ children }: any) => <h6>{children}</h6>,
+}));
+
+const mockGetGlobalData = jest.fn();
+jest.mock('../../../utils/global-data', () => ({
+  __esModule: true,
+  getGlobalData: () => mockGetGlobalData(),
+}));
+
+const mockGetPostBySlug = jest.fn();
+const mockGetPreviousPostBySlug = jest.fn();
+const mockGetNextPostBySlug = jest.fn();
+
+jest.mock('../../../utils/mdx-utils', () => ({
+  __esModule: true,
+  getPostBySlug: (...args: any[]) => mockGetPostBySlug(...args),
+  getPreviousPostBySlug: (...args: any[]) => mockGetPreviousPostBySlug(...args),
+  getNextPostBySlug: (...args: any[]) => mockGetNextPostBySlug(...args),
+  postFilePaths: ['hello.mdx', 'world.md'],
+}));
+
+describe('pages/posts/[slug]', () => {
+  test('renders title/description and prev/next links', () => {
+    render(
+      <PostPage
+        source={{}}
+        frontMatter={{ title: 'My Post', description: 'Post desc' }}
+        prevPost={{ slug: 'prev', title: 'Prev Post' }}
+        nextPost={{ slug: 'next', title: 'Next Post' }}
+        globalData={{ name: 'Blog Name', footerText: '© Footer' }}
+      />
+    );
+
+    expect(screen.getByRole('heading', { name: 'My Post' })).toBeInTheDocument();
+    expect(screen.getByText('Post desc')).toBeInTheDocument();
+
+    expect(screen.getByRole('link', { name: /Prev Post/i })).toHaveAttribute(
+      'href',
+      '/posts/prev'
+    );
+    expect(screen.getByRole('link', { name: /Next Post/i })).toHaveAttribute(
+      'href',
+      '/posts/next'
+    );
+  });
+
+  test('getStaticPaths maps postFilePaths into params', async () => {
+    const res = await getStaticPaths();
+    expect(res).toEqual({
+      paths: [{ params: { slug: 'hello' } }, { params: { slug: 'world' } }],
+      fallback: false,
+    });
+  });
+
+  test('getStaticProps returns props for slug', async () => {
+    mockGetGlobalData.mockReturnValue({ name: 'Blog', footerText: 'Footer' });
+    mockGetPostBySlug.mockResolvedValue({
+      mdxSource: { compiledSource: 'x' },
+      data: { title: 'T', description: 'D' },
+    });
+    mockGetPreviousPostBySlug.mockReturnValue({ slug: 'p', title: 'P' });
+    mockGetNextPostBySlug.mockReturnValue({ slug: 'n', title: 'N' });
+
+    const res = await getStaticProps({ params: { slug: 'my-slug' } } as any);
+
+    expect(mockGetPostBySlug).toHaveBeenCalledWith('my-slug');
+    expect(mockGetPreviousPostBySlug).toHaveBeenCalledWith('my-slug');
+    expect(mockGetNextPostBySlug).toHaveBeenCalledWith('my-slug');
+
+    expect(res).toEqual({
+      props: {
+        globalData: { name: 'Blog', footerText: 'Footer' },
+        source: { compiledSource: 'x' },
+        frontMatter: { title: 'T', description: 'D' },
+        prevPost: { slug: 'p', title: 'P' },
+        nextPost: { slug: 'n', title: 'N' },
+      },
+    });
+  });
+});
+
