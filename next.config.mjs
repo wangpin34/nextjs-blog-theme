@@ -1,3 +1,5 @@
+import createMDX from '@next/mdx';
+
 const staticConfig = {
   output: 'export',
   images: {
@@ -16,4 +18,15 @@ const ssrConfig = {
 
 const config = process.env.ENV === 'static' ? staticConfig : ssrConfig;
 
-export default config;
+const withMDX = createMDX({
+  extension: /\.(md|mdx)$/,
+  options: {
+    remarkPlugins: ['remark-mdx-images'],
+    rehypePlugins: ['@mapbox/rehype-prism'],
+  },
+});
+
+export default withMDX({
+  ...config,
+  pageExtensions: ['js', 'jsx', 'ts', 'tsx', 'md', 'mdx'],
+});

@@ -1,8 +1,7 @@
+import { MDXProvider } from '@mdx-js/react';
 import classnames from 'classnames';
-import { MDXRemote } from 'next-mdx-remote';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ComponentProps, useMemo } from 'react';
 import ArrowIcon from '../../components/ArrowIcon';
 import CustomLink from '../../components/CustomLink';
 import Footer from '../../components/Footer';
@@ -10,25 +9,36 @@ import Header from '../../components/Header';
 import { H1, H2, H3, H4, H5, H6 } from '../../components/HeadLine';
 import Layout, { GradientBackground } from '../../components/Layout';
 import SEO from '../../components/SEO';
+import { orderedPosts, postSlugs, postsBySlug } from '../../generated/posts';
 import { getGlobalData } from '../../utils/global-data';
-import {
-  getNextPostBySlug,
-  getPostBySlug,
-  getPreviousPostBySlug,
-  postFilePaths,
-} from '../../utils/mdx-utils';
+
+function normalizeDimension(value) {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string' && /^\d+$/.test(value)) return Number(value);
+  return undefined;
+}
+
 function CustomImage({ src, alt, ...rest }) {
-  const imgSrc = useMemo(() => require(`../../public${src}`), [src]);
+  const resolvedAlt =
+    typeof alt === 'string' && alt.trim().length > 0
+      ? alt
+      : typeof src === 'string'
+        ? src.slice(src.lastIndexOf('/') + 1, src.lastIndexOf('.'))
+        : '';
+
   return (
     <Image
       {...rest}
-      src={imgSrc}
-      alt={alt ?? src.subsring(src.lastIndexOf('/') + 1, src.lastIndexOf('.'))}
+      src={src}
+      alt={resolvedAlt}
+      width={normalizeDimension(rest.width) ?? 500}
+      height={normalizeDimension(rest.height) ?? 500}
     />
   );
 }
 
-type MDXComponents = ComponentProps<typeof MDXRemote>['components'];
+type MDXComponents = Record<string, any>;
+
 // Custom components/renderers to pass to MDX.
 // Since the MDX files aren't loaded by webpack, they have no knowledge of how
 // to handle import statements. Instead, you must include components in scope
@@ -55,7 +65,7 @@ const components: MDXComponents = {
       <code
         className={classnames(
           className,
-          'p-1 mx-1 text-pink-600 bg-slate-100 rounded-md dark:text-pink-600 dark:bg-slate-800'
+          'p-1 mx-1 text-pink-600 bg-slate-100 rounded-md dark:text-pink-600 dark:bg-slate-800',
         )}
         {...rest}
       >
@@ -65,12 +75,15 @@ const components: MDXComponents = {
 };
 
 export default function PostPage({
-  source,
+  slug,
   frontMatter,
   prevPost,
   nextPost,
   globalData,
 }) {
+  const post = postsBySlug[slug];
+  const PostContent = post?.Component;
+
   return (
     <Layout>
       <SEO
@@ -89,7 +102,11 @@ export default function PostPage({
         </header>
         <main>
           <article className="prose dark:prose-dark">
-            <MDXRemote {...source} components={components} />
+            {PostContent ? (
+              <MDXProvider components={components}>
+                <PostContent />
+              </MDXProvider>
+            ) : null}
           </article>
         </main>
         <div className="grid md:grid-cols-2 lg:-mx-24 mt-12">
@@ -137,16 +154,34 @@ export default function PostPage({
 }
 
 export const getStaticProps = async ({ params }) => {
+  const slug = params.slug;
   const globalData = getGlobalData();
-  const { mdxSource, data } = await getPostBySlug(params.slug);
-  const prevPost = getPreviousPostBySlug(params.slug);
-  const nextPost = getNextPostBySlug(params.slug);
+
+  const currentPost = postsBySlug[slug];
+  const currentPostIndex = orderedPosts.findIndex((post) => post.slug === slug);
+  const prevEntry =
+    currentPostIndex >= 0 ? orderedPosts[currentPostIndex + 1] : null;
+  const nextEntry =
+    currentPostIndex >= 0 ? orderedPosts[currentPostIndex - 1] : null;
+
+  const prevPost = prevEntry
+    ? {
+        title: String(prevEntry.frontMatter.title ?? prevEntry.slug),
+        slug: prevEntry.slug,
+      }
+    : null;
+  const nextPost = nextEntry
+    ? {
+        title: String(nextEntry.frontMatter.title ?? nextEntry.slug),
+        slug: nextEntry.slug,
+      }
+    : null;
 
   return {
     props: {
       globalData,
-      source: mdxSource,
-      frontMatter: data,
+      slug,
+      frontMatter: currentPost?.frontMatter ?? {},
       prevPost,
       nextPost,
     },
@@ -154,11 +189,7 @@ export const getStaticProps = async ({ params }) => {
 };
 
 export const getStaticPaths = async () => {
-  const paths = postFilePaths
-    // Remove file extensions for page paths
-    .map((path) => path.replace(/\.mdx?$/, ''))
-    // Map the path into the static paths object required by Next.js
-    .map((slug) => ({ params: { slug } }));
+  const paths = postSlugs.map((slug) => ({ params: { slug } }));
 
   return {
     paths,

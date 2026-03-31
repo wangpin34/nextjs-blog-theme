@@ -1,8 +1,9 @@
+@import './prisma-funky-normal.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 @tailwind variants;
-@import './prisma-funky-normal.css';
 
 h1,
 h2,

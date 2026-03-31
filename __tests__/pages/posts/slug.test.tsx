@@ -1,13 +1,13 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 
 import PostPage, {
   getStaticPaths,
   getStaticProps,
 } from '../../../pages/posts/[slug]';
 
-jest.mock('next-mdx-remote', () => ({
-  MDXRemote: () => <div data-testid="mdx-remote" />,
+jest.mock('@mdx-js/react', () => ({
+  __esModule: true,
+  MDXProvider: ({ children }: any) => <>{children}</>,
 }));
 
 jest.mock('next/image', () => ({
@@ -80,40 +80,71 @@ jest.mock('../../../utils/global-data', () => ({
   getGlobalData: () => mockGetGlobalData(),
 }));
 
-const mockGetPostBySlug = jest.fn();
-const mockGetPreviousPostBySlug = jest.fn();
-const mockGetNextPostBySlug = jest.fn();
-
-jest.mock('../../../utils/mdx-utils', () => ({
+jest.mock('../../../generated/posts', () => ({
   __esModule: true,
-  getPostBySlug: (...args: any[]) => mockGetPostBySlug(...args),
-  getPreviousPostBySlug: (...args: any[]) => mockGetPreviousPostBySlug(...args),
-  getNextPostBySlug: (...args: any[]) => mockGetNextPostBySlug(...args),
-  postFilePaths: ['hello.mdx', 'world.md'],
+  postsBySlug: {
+    'my-slug': {
+      slug: 'my-slug',
+      frontMatter: { title: 'T', description: 'D' },
+      Component: () => <div data-testid="mdx-content">Body</div>,
+    },
+    p: {
+      slug: 'p',
+      frontMatter: { title: 'P' },
+      Component: () => <div />,
+    },
+    n: {
+      slug: 'n',
+      frontMatter: { title: 'N' },
+      Component: () => <div />,
+    },
+    hello: {
+      slug: 'hello',
+      frontMatter: { title: 'Hello' },
+      Component: () => <div />,
+    },
+    world: {
+      slug: 'world',
+      frontMatter: { title: 'World' },
+      Component: () => <div />,
+    },
+  },
+  postSlugs: ['hello', 'world'],
+  orderedPosts: [
+    { slug: 'n', frontMatter: { title: 'N' }, Component: () => <div /> },
+    {
+      slug: 'my-slug',
+      frontMatter: { title: 'T', description: 'D' },
+      Component: () => <div data-testid="mdx-content">Body</div>,
+    },
+    { slug: 'p', frontMatter: { title: 'P' }, Component: () => <div /> },
+  ],
 }));
 
 describe('pages/posts/[slug]', () => {
   test('renders title/description and prev/next links', () => {
     render(
       <PostPage
-        source={{}}
+        slug="my-slug"
         frontMatter={{ title: 'My Post', description: 'Post desc' }}
         prevPost={{ slug: 'prev', title: 'Prev Post' }}
         nextPost={{ slug: 'next', title: 'Next Post' }}
         globalData={{ name: 'Blog Name', footerText: '© Footer' }}
-      />
+      />,
     );
 
-    expect(screen.getByRole('heading', { name: 'My Post' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'My Post' }),
+    ).toBeInTheDocument();
     expect(screen.getByText('Post desc')).toBeInTheDocument();
 
     expect(screen.getByRole('link', { name: /Prev Post/i })).toHaveAttribute(
       'href',
-      '/posts/prev'
+      '/posts/prev',
     );
     expect(screen.getByRole('link', { name: /Next Post/i })).toHaveAttribute(
       'href',
-      '/posts/next'
+      '/posts/next',
     );
   });
 
@@ -127,23 +158,13 @@ describe('pages/posts/[slug]', () => {
 
   test('getStaticProps returns props for slug', async () => {
     mockGetGlobalData.mockReturnValue({ name: 'Blog', footerText: 'Footer' });
-    mockGetPostBySlug.mockResolvedValue({
-      mdxSource: { compiledSource: 'x' },
-      data: { title: 'T', description: 'D' },
-    });
-    mockGetPreviousPostBySlug.mockReturnValue({ slug: 'p', title: 'P' });
-    mockGetNextPostBySlug.mockReturnValue({ slug: 'n', title: 'N' });
 
     const res = await getStaticProps({ params: { slug: 'my-slug' } } as any);
-
-    expect(mockGetPostBySlug).toHaveBeenCalledWith('my-slug');
-    expect(mockGetPreviousPostBySlug).toHaveBeenCalledWith('my-slug');
-    expect(mockGetNextPostBySlug).toHaveBeenCalledWith('my-slug');
 
     expect(res).toEqual({
       props: {
         globalData: { name: 'Blog', footerText: 'Footer' },
-        source: { compiledSource: 'x' },
+        slug: 'my-slug',
         frontMatter: { title: 'T', description: 'D' },
         prevPost: { slug: 'p', title: 'P' },
         nextPost: { slug: 'n', title: 'N' },
@@ -151,4 +172,3 @@ describe('pages/posts/[slug]', () => {
     });
   });
 });
-
