@@ -4,7 +4,7 @@ import path from 'path';
 
 const ROOT = process.cwd();
 const POSTS_DIR = path.join(ROOT, 'posts');
-const OUT_DIR = path.join(ROOT, 'generated', 'posts');
+const OUT_DIR = path.join(ROOT, 'src', 'generated', 'posts');
 const PUBLIC_DIR = path.join(ROOT, 'public');
 
 function isPostFile(fileName) {

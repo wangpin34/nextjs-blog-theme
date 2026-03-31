@@ -69,10 +69,10 @@ https://user-images.githubusercontent.com/3611928/153997545-6dcdeef0-e570-49e7-9
 
 [alt: video walkthrough of editing env vars]
 
-If setting an environment variable isn't your cup of tea, the defaults can be changed in [`utils/global-data.js`](/utils/global-data.js). You can also remove the variables and hard code blog information where these variables are used in the code base.
+If setting an environment variable isn't your cup of tea, the defaults can be changed in [`src/utils/global-data.js`](/src/utils/global-data.js). You can also remove the variables and hard code blog information where these variables are used in the code base.
 
-- `BLOG_THEME, BLOG_FONT_HEADINGS, & BLOG_FONT_PARAGRAPHS` are used in [`tailwind-preset.js`](tailwind-preset.js)
-- `BLOG_NAME, BLOG_TITLE, BLOG_FOOTER_TEXT` are used in [`pages/index.js`](pages/index.js) & [`pages/posts/[slug].js`](pages/posts/[slug].js) through the `globalData` object.
+- `BLOG_THEME, BLOG_FONT_HEADINGS, & BLOG_FONT_PARAGRAPHS` are used in [`src/utils/tailwind-preset.js`](src/utils/tailwind-preset.js)
+- `BLOG_NAME, BLOG_TITLE, BLOG_FOOTER_TEXT` are used in [`src/pages/index.js`](src/pages/index.js) & [`src/pages/posts/[slug].tsx`](src/pages/posts/[slug].tsx) through the `globalData` object.
 
 ## Adding new posts
 

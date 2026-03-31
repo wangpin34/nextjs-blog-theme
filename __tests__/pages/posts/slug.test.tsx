@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import PostPage, {
   getStaticPaths,
   getStaticProps,
-} from '../../../pages/posts/[slug]';
+} from '../../../src/pages/posts/[slug]';
 
 jest.mock('@mdx-js/react', () => ({
   __esModule: true,
@@ -27,35 +27,35 @@ jest.mock('next/link', () => ({
   ),
 }));
 
-jest.mock('../../../components/Layout', () => ({
+jest.mock('../../../src/components/Layout', () => ({
   __esModule: true,
   default: ({ children }: any) => <div data-testid="layout">{children}</div>,
   GradientBackground: () => null,
 }));
 
-jest.mock('../../../components/SEO', () => ({
+jest.mock('../../../src/components/SEO', () => ({
   __esModule: true,
   default: () => null,
 }));
 
-jest.mock('../../../components/Header', () => ({
+jest.mock('../../../src/components/Header', () => ({
   __esModule: true,
   default: ({ name }: any) => <div data-testid="header">{name}</div>,
 }));
 
-jest.mock('../../../components/Footer', () => ({
+jest.mock('../../../src/components/Footer', () => ({
   __esModule: true,
   default: ({ copyrightText }: any) => (
     <div data-testid="footer">{copyrightText}</div>
   ),
 }));
 
-jest.mock('../../../components/ArrowIcon', () => ({
+jest.mock('../../../src/components/ArrowIcon', () => ({
   __esModule: true,
   default: () => <span aria-hidden="true" />,
 }));
 
-jest.mock('../../../components/CustomLink', () => ({
+jest.mock('../../../src/components/CustomLink', () => ({
   __esModule: true,
   default: ({ href, children, ...rest }: any) => (
     <a href={href} {...rest}>
@@ -64,7 +64,7 @@ jest.mock('../../../components/CustomLink', () => ({
   ),
 }));
 
-jest.mock('../../../components/HeadLine', () => ({
+jest.mock('../../../src/components/HeadLine', () => ({
   __esModule: true,
   H1: ({ children }: any) => <h1>{children}</h1>,
   H2: ({ children }: any) => <h2>{children}</h2>,
@@ -75,12 +75,12 @@ jest.mock('../../../components/HeadLine', () => ({
 }));
 
 const mockGetGlobalData = jest.fn();
-jest.mock('../../../utils/global-data', () => ({
+jest.mock('../../../src/utils/global-data', () => ({
   __esModule: true,
   getGlobalData: () => mockGetGlobalData(),
 }));
 
-jest.mock('../../../generated/posts', () => ({
+jest.mock('../../../src/generated/posts', () => ({
   __esModule: true,
   postsBySlug: {
     'my-slug': {

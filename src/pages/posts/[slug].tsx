@@ -1,6 +1,5 @@
 import { MDXProvider } from '@mdx-js/react';
 import classnames from 'classnames';
-import Image from 'next/image';
 import Link from 'next/link';
 import ArrowIcon from '../../components/ArrowIcon';
 import CustomLink from '../../components/CustomLink';
@@ -12,31 +11,6 @@ import SEO from '../../components/SEO';
 import { orderedPosts, postSlugs, postsBySlug } from '../../generated/posts';
 import { getGlobalData } from '../../utils/global-data';
 
-function normalizeDimension(value) {
-  if (typeof value === 'number') return value;
-  if (typeof value === 'string' && /^\d+$/.test(value)) return Number(value);
-  return undefined;
-}
-
-function CustomImage({ src, alt, ...rest }) {
-  const resolvedAlt =
-    typeof alt === 'string' && alt.trim().length > 0
-      ? alt
-      : typeof src === 'string'
-        ? src.slice(src.lastIndexOf('/') + 1, src.lastIndexOf('.'))
-        : '';
-
-  return (
-    <Image
-      {...rest}
-      src={src}
-      alt={resolvedAlt}
-      width={normalizeDimension(rest.width) ?? 500}
-      height={normalizeDimension(rest.height) ?? 500}
-    />
-  );
-}
-
 type MDXComponents = Record<string, any>;
 
 // Custom components/renderers to pass to MDX.
@@ -45,7 +19,6 @@ type MDXComponents = Record<string, any>;
 // here.
 const components: MDXComponents = {
   a: CustomLink,
-  img: CustomImage,
   h1: H1,
   h2: H2,
   h3: H3,
