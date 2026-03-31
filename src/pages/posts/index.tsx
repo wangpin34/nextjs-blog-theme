@@ -1,14 +1,32 @@
 import Link from 'next/link';
-import { getPosts } from '../utils/mdx-utils';
+import { getPosts } from '../../utils/mdx-utils';
 
-import Footer from '../components/Footer';
-import Header from '../components/Header';
-import Layout, { GradientBackground } from '../components/Layout';
-import ArrowIcon from '../components/ArrowIcon';
-import { getGlobalData } from '../utils/global-data';
-import SEO from '../components/SEO';
+import ArrowIcon from '../../components/ArrowIcon';
+import Footer from '../../components/Footer';
+import Header from '../../components/Header';
+import Layout, { GradientBackground } from '../../components/Layout';
+import SEO from '../../components/SEO';
+import { getGlobalData } from '../../utils/global-data';
 
-export default function Index({ posts, globalData }) {
+type PostItem = {
+  filePath: string;
+  data: {
+    title?: string;
+    description?: string;
+    date?: string;
+  };
+};
+
+type PostsPageProps = {
+  posts: PostItem[];
+  globalData: {
+    name: string;
+    blogTitle: string;
+    footerText: string;
+  };
+};
+
+export default function PostsPage({ posts, globalData }: PostsPageProps) {
   return (
     <Layout>
       <SEO title={globalData.name} description={globalData.blogTitle} />
@@ -26,7 +44,8 @@ export default function Index({ posts, globalData }) {
               <Link
                 as={`/posts/${post.filePath.replace(/\.mdx?$/, '')}`}
                 href={`/posts/[slug]`}
-                passHref legacyBehavior
+                passHref
+                legacyBehavior
               >
                 <a className="py-6 lg:py-10 px-6 lg:px-16 block focus:outline-none focus:ring-4">
                   {post.data.date && (
