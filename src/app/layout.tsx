@@ -1,9 +1,9 @@
 import Footer from 'components/Footer';
+import Header from 'components/Header';
 import Layout, { GradientBackground } from 'components/Layout';
 import type { Metadata, Viewport } from 'next';
-import { getGlobalData } from 'utils/global-data';
-
 import 'styles/globals.css';
+import { getGlobalData } from 'utils/global-data';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -26,6 +26,7 @@ export default function RootLayout({
       <body className="antialiased text-lg bg-white dark:bg-gray-900 dark:text-white leading-base">
         <span className={`theme-${process.env.NEXT_PUBLIC_ANALYTICS_ID}`} />
         <Layout>
+          <Header name={globalData.name} />
           {children}
           <Footer copyrightText={globalData.footerText} />
           <GradientBackground
