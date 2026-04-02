@@ -1,5 +1,4 @@
 import ArrowIcon from 'components/ArrowIcon';
-import Header from 'components/Header';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getGlobalData } from 'utils/global-data';
@@ -23,7 +22,6 @@ export default function PostsPage() {
 
   return (
     <>
-      <Header name={globalData.name} pathname="/posts" />
       <main className="w-full">
         <h1 className="text-3xl lg:text-5xl text-center mb-12">
           {globalData.blogTitle}

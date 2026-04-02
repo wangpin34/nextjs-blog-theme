@@ -1,5 +1,4 @@
 import ArrowIcon from 'components/ArrowIcon';
-import Header from 'components/Header';
 import PostContentClient from 'components/PostContentClient';
 import type { Metadata } from 'next';
 import Link from 'next/link';
@@ -74,7 +73,6 @@ export default async function PostPage({ params }: { params: Params }) {
 
   return (
     <>
-      <Header name={globalData.name} pathname={`/posts/${slug}`} />
       <article className="w-full max-w-full px-6 md:px-0 selection:bg-pink-300 selection:text-slate-600">
         <header>
           <h1 className="text-3xl md:text-5xl dark:text-white text-center mb-12">
