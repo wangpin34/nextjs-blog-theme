@@ -23,7 +23,7 @@ export default function PostsPage() {
 
   return (
     <>
-      <Header name={globalData.name} pathname="/posts" />
+      <Header name={globalData.name} />
       <main className="w-full">
         <h1 className="text-3xl lg:text-5xl text-center mb-12">
           {globalData.blogTitle}
