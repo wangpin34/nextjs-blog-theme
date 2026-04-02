@@ -17,3 +17,11 @@ h6 {
 body {
   font-family: var(--font-secondary);
 }
+
+/*
+  Override default style provided by tailwind typography plugin, which adds quotes before and after inline code. We don't want that because it looks weird with the dark background of code blocks.
+*/
+.prose :before,
+.prose :after {
+  content: none;
+}
