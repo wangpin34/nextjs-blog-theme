@@ -2,6 +2,7 @@ import createMDX from '@next/mdx';
 
 const staticConfig = {
   output: 'export',
+  pageExtensions: ['js', 'jsx', 'ts', 'tsx', 'md', 'mdx'],
   images: {
     unoptimized: true,
   },
@@ -14,6 +15,7 @@ const ssrConfig = {
     contentDispositionType: 'attachment',
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
+  pageExtensions: ['js', 'jsx', 'ts', 'tsx', 'md', 'mdx'],
 };
 
 const config = process.env.ENV === 'static' ? staticConfig : ssrConfig;
