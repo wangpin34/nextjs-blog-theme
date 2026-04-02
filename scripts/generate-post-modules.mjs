@@ -162,7 +162,7 @@ function main() {
     const outputFilePath = path.join(OUT_DIR, `${slug}.mdx`);
     const rewrittenContent = rewriteAbsoluteImagePaths(content, outputFilePath);
 
-    const outputMdx = `export const frontMatter = ${sanitizeFrontMatter(data)};\n\n${rewrittenContent.trim()}\n`;
+    const outputMdx = `\nexport const frontMatter = ${sanitizeFrontMatter(data)};\n\n${rewrittenContent.trim()}\n`;
     fs.writeFileSync(outputFilePath, outputMdx);
 
     posts.push({
