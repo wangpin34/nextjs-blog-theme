@@ -16,7 +16,8 @@ export default function BlogNavLink({
   // for the selected layout segment
   const pathname = usePathname();
   const isActive =
-    pathname.endsWith(href) || (href.includes(pathname) && pathname !== '/');
+    (href === '/' && pathname === href) ||
+    (pathname.startsWith(href) && href !== '/');
 
   return (
     <Link

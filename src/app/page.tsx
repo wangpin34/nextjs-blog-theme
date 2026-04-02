@@ -1,5 +1,4 @@
 import ArrowIcon from 'components/ArrowIcon';
-import Header from 'components/Header';
 import Link from 'next/link';
 import { getGlobalData } from 'utils/global-data';
 import { getPosts } from 'utils/mdx-utils';
@@ -8,7 +7,6 @@ export default function Home() {
   const posts = getPosts();
   return (
     <>
-      <Header name={globalData.name} />
       <main className="container">
         <h1 className="text-3xl lg:text-5xl text-center mb-12">最新文章</h1>
         <ul className="w-full">

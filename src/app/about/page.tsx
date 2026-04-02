@@ -1,4 +1,3 @@
-import Header from 'components/Header';
 import SEO from 'components/SEO';
 import { getGlobalData } from 'utils/global-data';
 
@@ -10,7 +9,6 @@ export default function AboutPage() {
         title={`About - ${globalData.name}`}
         description={`Learn more about ${globalData.name}`}
       />
-      <Header name={globalData.name} pathname="/about" />
       <main className="w-full max-w-full px-6 md:px-0 selection:bg-pink-300 selection:text-slate-600">
         <article className="prose dark:prose-dark mx-auto">
           <h1>About</h1>
