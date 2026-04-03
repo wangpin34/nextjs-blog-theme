@@ -16,6 +16,9 @@ const ssrConfig = {
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   pageExtensions: ['js', 'jsx', 'ts', 'tsx', 'md', 'mdx'],
+  devIndicators: {
+    position: 'bottom-left',
+  },
 };
 
 const config = process.env.ENV === 'static' ? staticConfig : ssrConfig;
